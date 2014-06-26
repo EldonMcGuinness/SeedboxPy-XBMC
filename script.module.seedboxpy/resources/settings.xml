@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="32001">
+        <setting label="32010" type="text" id="server_address"/>
+        <setting label="32011" type="number" id="server_port" enable="!eq(-1,)" default="80"/>
+        <setting label="32012" type="text" id="username" enable="!eq(-2,)" default=""/>
+        <setting label="32013" type="text" id="password" option="hidden"  enable="!eq(-1,)" default=""/>
+    </category>
+</settings>
