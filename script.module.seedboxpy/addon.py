@@ -68,7 +68,6 @@ class SeedboxPy_XMBC(xbmcgui.Window):
         self.rssDaemonStatusStatRed.setVisible(False)
         self.addControl(self.rssDaemonStatusStatRed)
         
-        
         self.queueDaemonStatus = xbmcgui.ControlLabel(100, 248, 350, 25, 'Queue Daemon Status:', textColor='0xFF333333')
         self.addControl(self.queueDaemonStatus)
         
@@ -80,6 +79,17 @@ class SeedboxPy_XMBC(xbmcgui.Window):
         self.queueDaemonStatusStatRed.setVisible(False)
         self.addControl(self.queueDaemonStatusStatRed)
 
+        self.torrentDaemonStatus = xbmcgui.ControlLabel(100, 285, 350, 25, 'Torrent Daemon Status:', textColor='0xFF333333')
+        self.addControl(self.torrentDaemonStatus)
+        
+        self.torrentDaemonStatusStatGreen = xbmcgui.ControlLabel(475, 285, 350, 25, 'Online', textColor='0xFF24CD1B')
+        self.torrentDaemonStatusStatGreen.setVisible(False)
+        self.addControl(self.torrentDaemonStatusStatGreen)
+        
+        self.torrentDaemonStatusStatRed = xbmcgui.ControlLabel(475, 285, 350, 25, 'Offline', textColor='0xFFCD2D1B')
+        self.torrentDaemonStatusStatRed.setVisible(False)
+        self.addControl(self.torrentDaemonStatusStatRed)
+        
         self.loadingMessage = xbmcgui.ControlLabel(0,0,150,25, 'Loading...', textColor='0xFF333333')
         self.loadingMessage.setVisible(False)
         self.loadingMessage.setPosition((self.getWidth()-250), (self.getHeight()-125))
@@ -92,7 +102,10 @@ class SeedboxPy_XMBC(xbmcgui.Window):
         
     def _getData(self):
         
+        xbmcgui.lock()
         self.loadingMessage.setVisible(True)
+        self.loadingMessage.setLabel('Fetching Data...')
+        xbmcgui.unlock()
         
         try:
             authHandler = urllib2.HTTPBasicAuthHandler()
@@ -108,16 +121,23 @@ class SeedboxPy_XMBC(xbmcgui.Window):
             server_status_json = urllib2.urlopen(self.server['uri']).read()
 
             self.server_status = json.loads(server_status_json)
-            self.loadingMessage.setVisible(False)
+            
             return True
+            
         except:
+            xbmcgui.lock()
             self.loadingMessage.setVisible(False)
+            xbmcgui.unlock()
+            
             self._modal('Download Failed', 'Could not get the Server Status')
+            
             return False
             
     def _loadData(self):
     
         xbmcgui.lock()
+        self.loadingMessage.setLabel('Loading...')
+
         self.usedSpaceStat.setLabel('{0} of {1}'.format(self.server_status['usedSpace'],self.server_status['maxUsedSpace']))
         self.downloadsQueuedStat.setLabel('{0}'.format(self.server_status['downloadsQueued']))
         
@@ -141,14 +161,23 @@ class SeedboxPy_XMBC(xbmcgui.Window):
         else:
             self.rssDaemonStatusStatGreen.setVisible(False)
             self.rssDaemonStatusStatGreen.setVisible(True)
-        
+
+        if self.server_status['torrentDaemonStatus']:
+            self.torrentDaemonStatusStatGreen.setVisible(True)
+            self.torrentDaemonStatusStatRed.setVisible(False)
+        else:
+            self.torrentDaemonStatusStatGreen.setVisible(False)
+            self.torrentDaemonStatusStatGreen.setVisible(True)
+            
+        self.loadingMessage.setVisible(False)
         xbmcgui.unlock()
 
-    def doAction(self, action):
-        self._modal('button','Code Detected: {0}'.format(action.getButtonCode()))
+    def onAction(self, action):
         if action == ACTION_SELECT_ITEM:
             if self._getData():
                 self._loadData()
+        if action == ACTION_PREVIOUS_MENU or action == ACTION_NAV_BACK:
+            self.close()
         
     def _modal(self,title,message):
         modal = xbmcgui.Dialog()
